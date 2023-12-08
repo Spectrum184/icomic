@@ -73,21 +73,21 @@ class ComicsApi {
         const title = $(".image img", item).attr("alt");
         const id = this.getId($("a", item).attr("href"));
         const is_trending = !!$(".icon.icon-hot", item).toString();
-        const updated_at = $(".time-ago", item).text();
-        const short_description = this.trim($(".excerpt", item).text());
-        const info = $(".message_main p", item).text().split("  ");
-        const other_names = info[0].split(":")[1] || "";
-        const status = info[2].split(":")[1] || "";
-        const total_views = info[3].split(":")[1] || "";
-        const total_comment = info[4].split(":")[1] || "";
-        const total_follower = info[5].split(":")[1] || "";
-        const total_like = $(".pull-left .fa.fa-heart", item).text();
-        const chapter_name = $(".comic-item li:first-child", item).attr("title");
-        const chapter_id = $(".comic-item li:first-child a", item).attr("href").split("/").at(-1);
-        let genres = info[1].split(":")[1].split(",") || [];
-        genres = genres
+        const updated_at = $(".comic-item .time", item).eq(0).text();
+        const short_description = this.trim($(".box_text", item).text());
+        const info = $(".message_main", item).text().split("  ");
+
+        const other_names = info[1].replace(/Tên khác:/, "").trim();
+        const status = info[3].replace(/Tình trạng:/, "").trim();
+        const total_views = info[4].replace(/Lượt xem:/, "").trim();
+        const followers = info[6].replace(/Theo dõi:/, "").trim();
+        const chapter_name = $(".comic-item a", item).attr("title");
+        const chapter_id = $(".comic-item a", item).attr("href")?.split("/")?.at(-1) || "";
+        const genres = info[2]
+          .replace(/Thể loại:/, "")
+          .split(",")
           .map((tag: string) => {
-            const foundGenre = allGenres.find((g: any) => tag.toLowerCase() === g.name.toLowerCase());
+            const foundGenre = allGenres.find((g: any) => tag.toLowerCase().trim() === g.name.toLowerCase());
             if (!foundGenre) return null;
             return { id: foundGenre.id, name: foundGenre.name };
           })
@@ -101,11 +101,9 @@ class ComicsApi {
           genres,
           short_description,
           other_names,
-          total_follower,
           status: status.includes("Đang") ? "Ongoing" : "Completed",
-          total_views: Number(total_views),
-          total_comment: Number(total_comment),
-          total_like: Number(total_like),
+          total_views: total_views,
+          followers: followers,
           last_chapter: {
             id: Number(chapter_id),
             name: /\d+/.test(chapter_name) ? `Chapter ${chapter_name.match(/\d+/)[0]}` : chapter_name,
@@ -134,13 +132,13 @@ class ComicsApi {
 
   public async getRecommendComics(): Promise<any> {
     const $ = await this.createRequest("", 1);
-    const comics = Array.from($("#div_suggest li")).map((item) => {
+    const comics = Array.from($(".owl-carousel > .item")).map((item) => {
       const id = this.getId($("a", item).attr("href"));
       const title = $("img", item).attr("alt");
       const thumbnail = $("img", item).attr("src");
-      const updated_at = this.trim($(".time-ago", item).text());
-      const name = $(".last_chapter > a", item).text();
-      const chapter_id = Number($(".last_chapter > a", item).attr("href").split("/").at(-1));
+      const updated_at = this.trim($(".time", item).text());
+      const name = this.trim($(".slide-caption > a", item).text());
+      const chapter_id = Number($(".slide-caption > a", item).attr("href").split("/").at(-1));
       return {
         id,
         title,
@@ -274,8 +272,8 @@ class ComicsApi {
         this.createRequest(`truyen-tranh/${comicId}-1`),
         this.getChapters(comicId),
       ]);
-      const title = $(".book_detail h1").text();
-      const thumbnail = $(".book_detail img").attr("src");
+      const title = $(".title-detail").text();
+      const thumbnail = $(".detail-info img").attr("src");
       const description = this.trim(
         $(".detail-content p")
           .text()
@@ -288,14 +286,14 @@ class ComicsApi {
         ? $(".author p:nth-child(2)").text()
         : "Updating";
       const status = $(".status p:nth-child(2)").text() === "Hoàn thành" ? "Completed" : "Ongoing";
-      const genres = Array.from($(".list01 a")).map((item) => {
+      const genres = Array.from($(".kind.row a")).map((item) => {
         const id = this.getId($(item).attr("href"), "genre");
         const name = $(item).text();
         return { id, name };
       });
       const other_names = $(".other_name p:nth-child(2)").text().split("; ");
       const total_views = this.formatTotal($(".list-info .row:last-child p:nth-child(2)").text());
-      const followers = this.formatTotal($(".list-info .row:nth-last-child(2) p:nth-child(2)").text());
+      const followers = this.formatTotal($(".follow span b").text());
       return {
         title,
         thumbnail,

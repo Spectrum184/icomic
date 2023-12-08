@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
     if (!allStatus.includes(status)) status = "all";
 
-    return Response.json(await Comics.getComicsByGenre(params.slug, page, status as Status));
+    return Response.json(await Comics.getComicsByGenre(params.slug, page, status as Status), { status: 200 });
   } catch (error) {
     console.error(error);
     return new Response("Internal Server Error!", { status: 500 });
